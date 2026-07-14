@@ -2941,6 +2941,8 @@ function typeText(element, text, speed){
 
 // 真实 AI 回复（调用 OpenClaw 后端）
 async function realReply(userText){
+  // 安全引用思考流（定义在闭包内，全局作用域需兵底）
+  const TS = (window.ThoughtStream) || { clear(){}, add(){}, updateLast(){} };
   const typing = addJarvisMessage('', true);
   setStatus('思考中...');
   AIActivity.setState('thinking');
@@ -2949,8 +2951,8 @@ async function realReply(userText){
   ArcEffect.burst();
   
   // 思考流：开始
-  ThoughtStream.clear();
-  ThoughtStream.add('thinking', '理解用户问题...');
+  TS.clear();
+  TS.add('thinking', '理解用户问题...');
   
   try {
     // 先构造历史消息
@@ -2969,7 +2971,7 @@ async function realReply(userText){
     
     // 思考流：检索上下文
     setTimeout(() => {
-      ThoughtStream.add('searching', '检索相关记忆...', `找到 ${Math.min(history.length, 5)} 条上下文`);
+      TS.add('searching', '检索相关记忆...', `找到 ${Math.min(history.length, 5)} 条上下文`);
     }, 300);
     
     // 调用后端代理（token 仅后端持有，不暴露到前端）
@@ -2989,7 +2991,7 @@ async function realReply(userText){
     
     // 思考流：开始生成
     setTimeout(() => {
-      ThoughtStream.add('thinking', '生成回复中...');
+      TS.add('thinking', '生成回复中...');
     }, 600);
     
     // 处理流式响应
@@ -3027,7 +3029,7 @@ async function realReply(userText){
                 
                 // 每 100 字更新一次思考流
                 if (charCount % 100 < delta.length) {
-                  ThoughtStream.updateLast(`生成回复中... 已输出 ${charCount} 字`);
+                  TS.updateLast(`生成回复中... 已输出 ${charCount} 字`);
                 }
               }
             } catch (e) {
@@ -3046,7 +3048,7 @@ async function realReply(userText){
     }
     
     // 思考流：完成
-    ThoughtStream.add('success', '回复完成', `共 ${fullText.length} 字`);
+    TS.add('success', '回复完成', `共 ${fullText.length} 字`);
     
     // 检测并插入动态卡片
     const cards = CardRenderer.detectCards(fullText);
@@ -3058,7 +3060,7 @@ async function realReply(userText){
     const bubble = typing.querySelector('.msg-bubble');
     bubble.innerHTML = '';
     bubble.textContent = '⚠️ 连接失败：' + e.message;
-    ThoughtStream.add('error', '请求失败', e.message);
+    TS.add('error', '请求失败', e.message);
     // fallback 到模拟回复
     setTimeout(() => mockReply(userText), 500);
   } finally {
@@ -4440,7 +4442,7 @@ const SidePanel = (function(){
   }
 
   // 思考流管理
-  const ThoughtStream = {
+  const ThoughtStream = window.ThoughtStream = {
     list: null,
     items: [],
     
