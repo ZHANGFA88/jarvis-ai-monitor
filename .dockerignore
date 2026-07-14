@@ -1,0 +1,27 @@
+.git
+.gitignore
+.env
+config.json
+config/*.json
+!config/.gitkeep
+data/*.json
+data/*.jsonl
+data/*cache*
+media/
+*.bak
+*.bak-*
+*.backup
+*.before-*
+*-bak-*
+public/**/*-bak-*
+public/**/*.bak-*
+scripts/**/*-bak-*
+__pycache__/
+*.pyc
+.DS_Store
+playwright-report/
+test-results/
+
+# Unused experimental globe textures
+public/globe/assets/
+public/globe/skyblue-earth-A.jpg

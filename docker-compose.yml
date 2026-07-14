@@ -1,0 +1,14 @@
+services:
+  jarvis-ai-monitor:
+    build: .
+    image: jarvis-ai-monitor:latest
+    container_name: jarvis-ai-monitor
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_PORT:-8765}:8765"
+    environment:
+      DASHBOARD_PORT: 8765
+      DASHBOARD_HOST: 0.0.0.0
+      # 可选：AI 对话功能（舆情监控不需要）
+      OPENCLAW_API_URL: ${OPENCLAW_API_URL:-}
+      OPENCLAW_API_TOKEN: ${OPENCLAW_API_TOKEN:-}

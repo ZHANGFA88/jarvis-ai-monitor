@@ -1,0 +1,11 @@
+{
+  "title": "JARVIS AI · 舆情监控大屏",
+  "refreshSeconds": 120,
+  "hotspot": {
+    "cacheTTL": 120,
+    "platforms": ["weibo", "douyin", "zhihu", "bilibili", "toutiao", "github"]
+  },
+  "chat": {
+    "note": "AI 对话配置请在 .env 中设置 OPENCLAW_API_URL 和 OPENCLAW_API_TOKEN，切勿写入此文件"
+  }
+}

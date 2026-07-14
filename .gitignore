@@ -1,0 +1,23 @@
+# Secrets / local config
+.env
+config.json
+config/*.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Logs / temp
+*.log
+.DS_Store
+/tmp/
+
+# Backups
+*.bak
+*.bak-*
+*.backup
+
+# Test artifacts
+playwright-report/
+test-results/
