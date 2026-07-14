@@ -3699,11 +3699,11 @@ const CardRenderer = {
 const FocusThread = {
   // 当前焦点
   current: {
-    title: '贾维斯 UI 功能开发',
-    desc: '为贾维斯页面添加白龙马的功能特性',
-    progress: 3,
-    total: 6,
-    steps: ['AI 活动状态', '思考流面板', '记忆图谱', '语音系统', '动态卡片', '焦点线索']
+    title: '首页卡片真实数据化',
+    desc: '将贾维斯首页各功能卡片从写死假数据接入真实 API',
+    progress: 4,
+    total: 5,
+    steps: ['MONITOR 系统监控', 'EMBY 媒体库', 'CLEANER 磁盘扫描', 'MEMORY 记忆图谱', 'SPEED 网络测速']
   },
   
   // 历史线索
@@ -4086,83 +4086,59 @@ const SidePanel = (function(){
       <button class="speed-start-btn" id="speedStart">▶ 开始测速</button>
     `,
     clean: () => `
-      <div class="clean-item">
-        <div class="icon">🧹</div>
-        <div class="info">
-          <div class="name">系统缓存</div>
-          <div class="size">1.2 GB</div>
-        </div>
-        <div class="status">可清理</div>
+      <div id="cleanList">
+        <div class="clean-item"><div class="info"><div class="name">扫描中...</div><div class="size">--</div></div></div>
       </div>
-      <div class="clean-item">
-        <div class="icon">🖼️</div>
-        <div class="info">
-          <div class="name">缩略图缓存</div>
-          <div class="size">856 MB</div>
-        </div>
-        <div class="status">可清理</div>
-      </div>
-      <div class="clean-item">
-        <div class="icon">📝</div>
-        <div class="info">
-          <div class="name">日志文件</div>
-          <div class="size">245 MB</div>
-        </div>
-        <div class="status">可清理</div>
-      </div>
-      <div class="clean-item">
-        <div class="icon">🗑️</div>
-        <div class="info">
-          <div class="name">回收站</div>
-          <div class="size">128 MB</div>
-        </div>
-        <div class="status">可清理</div>
-      </div>
-      <br/>
+      <div style="text-align:center;margin:10px 0;font-size:13px;color:var(--muted)">可清理合计 <span id="cleanTotal" style="color:var(--cyan);font-weight:bold">--</span></div>
       <button class="speed-start-btn" id="cleanStart">🧹 一键清理</button>
     `,
     monitor: () => `
       <div class="speed-gauge">
-        <div class="speed-value" style="font-size:32px" id="monitorCpu">35%</div>
+        <div class="speed-value" style="font-size:32px" id="monitorCpu">--</div>
         <div class="speed-unit">CPU USAGE</div>
       </div>
       <div class="clean-item">
         <div class="icon">💾</div>
-        <div class="info"><div class="name">内存</div><div class="size">52% used</div></div>
-        <div class="status">正常</div>
+        <div class="info"><div class="name">内存</div><div class="size" id="monitorMem">-- used</div></div>
+        <div class="status" id="monitorMemStatus">--</div>
       </div>
       <div class="clean-item">
         <div class="icon">💿</div>
-        <div class="info"><div class="name">磁盘</div><div class="size">64% used</div></div>
-        <div class="status">正常</div>
+        <div class="info"><div class="name">磁盘</div><div class="size" id="monitorDisk">-- used</div></div>
+        <div class="status" id="monitorDiskStatus">--</div>
       </div>
       <div class="clean-item">
-        <div class="icon">🌐</div>
-        <div class="info"><div class="name">网络</div><div class="size">↓45M ↑12M</div></div>
-        <div class="status">正常</div>
+        <div class="icon">⚙️</div>
+        <div class="info"><div class="name">系统负载</div><div class="size" id="monitorLoad">--</div></div>
+        <div class="status" id="monitorLoadStatus">--</div>
       </div>
       <div class="clean-item">
-        <div class="icon">🌡️</div>
-        <div class="info"><div class="name">温度</div><div class="size">42°C</div></div>
-        <div class="status">正常</div>
+        <div class="icon">⏱️</div>
+        <div class="info"><div class="name">运行时间</div><div class="size" id="monitorUptime">--</div></div>
+        <div class="status">在线</div>
       </div>
     `,
     emby: () => `
       <div class="music-list-title">▸ MEDIA LIBRARY</div>
       <div class="clean-item">
         <div class="icon">🎬</div>
-        <div class="info"><div class="name">电影库</div><div class="size">1606 部</div></div>
-        <div class="status">正常</div>
+        <div class="info"><div class="name">电影库</div><div class="size" id="embyMovies">-- 部</div></div>
+        <div class="status" id="embyMoviesStatus">--</div>
       </div>
       <div class="clean-item">
         <div class="icon">📺</div>
-        <div class="info"><div class="name">剧集库</div><div class="size">856 部</div></div>
-        <div class="status">正常</div>
+        <div class="info"><div class="name">剧集库</div><div class="size" id="embySeries">-- 部</div></div>
+        <div class="status" id="embySeriesStatus">--</div>
+      </div>
+      <div class="clean-item">
+        <div class="icon">🎞️</div>
+        <div class="info"><div class="name">剧集总集数</div><div class="size" id="embyEpisodes">-- 集</div></div>
+        <div class="status">—</div>
       </div>
       <div class="clean-item">
         <div class="icon">👤</div>
-        <div class="info"><div class="name">在线用户</div><div class="size">2 人</div></div>
-        <div class="status">活跃</div>
+        <div class="info"><div class="name">在播会话</div><div class="size" id="embyActive">-- 个</div></div>
+        <div class="status" id="embyActiveStatus">--</div>
       </div>
       <br/>
       <button class="speed-start-btn">🔄 刷新媒体库</button>
@@ -4448,6 +4424,7 @@ const SidePanel = (function(){
       if(func === 'speed') initSpeedTest();
       if(func === 'clean') initCleaner();
       if(func === 'monitor') initMonitor();
+      if(func === 'emby') initEmby();
       if(func === 'thought') ThoughtStream.init();
       if(func === 'memory') MemoryGraph.init();
       if(func === 'focus') FocusThread.init();
@@ -4584,8 +4561,9 @@ const SidePanel = (function(){
       this.ctx = this.canvas.getContext('2d');
       this.resize();
       
-      // 生成节点
+      // 先用 mock 数据生成，再异步拉真实记忆替换
       this.generateNodes();
+      this.loadRealMemory();
       
       // 绑定点击
       this.canvas.addEventListener('click', (e) => this.handleClick(e));
@@ -4593,6 +4571,22 @@ const SidePanel = (function(){
       
       // 开始动画
       this.animate();
+    },
+    
+    async loadRealMemory(){
+      try{
+        const d = await fetch('/api/agent/memory').then(r=>r.json());
+        if(d.ok && d.nodes && d.nodes.length){
+          this.mockMemories = d.nodes.map(n => ({
+            title: n.title, desc: n.desc, tags: n.tags,
+            temp: n.temp, hoursAgo: n.hoursAgo
+          }));
+          this.generateNodes();
+          // 同步更新首页记忆数量徽章
+          const badge = document.querySelector('.function-card[data-func="memory"] .card-value');
+          if(badge) badge.textContent = d.count;
+        }
+      }catch(e){ /* 保留 mock */ }
     },
     
     resize(){
@@ -4785,7 +4779,7 @@ const SidePanel = (function(){
     }
   }
 
-  // 测速
+  // 测速（接真实 /api/system/speedtest）
   function initSpeedTest(){
     const btn = document.getElementById('speedStart');
     const val = document.getElementById('speedValue');
@@ -4794,76 +4788,140 @@ const SidePanel = (function(){
     const up = document.getElementById('speedUp');
     let running = false;
     
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       if(running) return;
       running = true;
       btn.textContent = '测试中...';
       ParticleSphere.setThinking(true);
       ArcEffect.burst();
       SoundFX.send();
-      
-      let speed = 0;
-      const target = 150 + Math.random() * 100;
-      const timer = setInterval(()=>{
-        speed += (target - speed) * 0.08;
-        val.textContent = Math.floor(speed);
-        if(speed > target * 0.95){
-          clearInterval(timer);
-          ping.textContent = (8 + Math.random() * 5).toFixed(1) + 'ms';
-          down.textContent = Math.floor(target) + 'M';
-          up.textContent = Math.floor(target * 0.6) + 'M';
+      val.textContent = '...';
+      ping.textContent = '--'; down.textContent = '--'; up.textContent = '--';
+      // 测试期间数字滚动动画
+      let anim = 0;
+      const animTimer = setInterval(()=>{ anim = (anim+7)%99; val.textContent = anim; }, 90);
+      try{
+        const s = await fetch('/api/system/speedtest').then(r=>r.json());
+        clearInterval(animTimer);
+        if(s.ok){
+          const dl = s.downloadMbps!=null ? s.downloadMbps : 0;
+          // 数字向真实下载值动画收敛
+          let cur = 0; const tgt = dl;
+          const t2 = setInterval(()=>{
+            cur += (tgt-cur)*0.15;
+            val.textContent = cur.toFixed(1);
+            if(Math.abs(tgt-cur)<0.2){ clearInterval(t2); val.textContent = tgt.toFixed(1); }
+          }, 60);
+          ping.textContent = s.ping!=null ? s.ping+'ms' : '--';
+          down.textContent = s.downloadMbps!=null ? s.downloadMbps+'M' : '--';
+          up.textContent = s.uploadMbps!=null ? s.uploadMbps+'M' : '--';
           btn.textContent = '✓ 测试完成';
-          running = false;
-          ParticleSphere.setThinking(false);
-          SoundFX.reply();
-          setTimeout(()=>{ btn.textContent = '▶ 重新测试'; }, 2000);
+        }else{
+          val.textContent = '0'; btn.textContent = '✗ 测试失败';
         }
-      }, 80);
+      }catch(e){
+        clearInterval(animTimer);
+        val.textContent = '0'; btn.textContent = '✗ 测试失败';
+      }
+      running = false;
+      ParticleSphere.setThinking(false);
+      SoundFX.reply();
+      setTimeout(()=>{ btn.textContent = '▶ 重新测速'; }, 2500);
     });
   }
 
-  // 清理
-  function initCleaner(){
+  // 清理（接真实扫描 /api/system/cleanup，只扫描不删除）
+  async function initCleaner(){
+    const list = document.getElementById('cleanList');
+    const totalEl = document.getElementById('cleanTotal');
     const btn = document.getElementById('cleanStart');
-    let cleaning = false;
-    
-    btn.addEventListener('click', ()=>{
-      if(cleaning) return;
-      cleaning = true;
-      btn.textContent = '清理中...';
-      SoundFX.send();
-      
-      const items = document.querySelectorAll('.clean-item');
-      let i = 0;
-      const timer = setInterval(()=>{
-        if(i >= items.length){
-          clearInterval(timer);
-          btn.textContent = '✓ 清理完成';
-          cleaning = false;
-          SoundFX.reply();
-          return;
-        }
-        items[i].classList.add('cleaning');
-        items[i].querySelector('.status').textContent = '清理中';
-        setTimeout(()=>{
-          items[i].classList.remove('cleaning');
-          items[i].querySelector('.status').textContent = '已清理';
-          items[i].querySelector('.size').textContent = '0 MB';
-        }, 600 + i * 200);
-        i++;
-      }, 700);
-    });
+    if(!list) return;
+    async function scan(){
+      try{
+        const s = await fetch('/api/system/cleanup').then(r=>r.json());
+        if(!document.body.contains(list)) return;
+        if(!s.ok || !s.items){ list.innerHTML='<div class="clean-item"><div class="info"><div class="name">扫描失败</div></div></div>'; return; }
+        list.innerHTML = s.items.map(it => `
+          <div class="clean-item">
+            <div class="icon">${it.icon}</div>
+            <div class="info"><div class="name">${it.name}</div><div class="size">${it.size}</div></div>
+            <div class="status">${it.bytes>0?'可清理':'已净'}</div>
+          </div>`).join('');
+        if(totalEl) totalEl.textContent = s.total;
+      }catch(e){
+        list.innerHTML='<div class="clean-item"><div class="info"><div class="name">扫描失败</div></div></div>';
+      }
+    }
+    scan();
+    if(btn && !btn._bound){
+      btn._bound = true;
+      btn.addEventListener('click', ()=>{
+        SoundFX.send();
+        btn.textContent = '重新扫描中...';
+        scan().then(()=>{ setTimeout(()=>{ btn.textContent='🔄 重新扫描'; SoundFX.reply(); }, 500); });
+      });
+    }
   }
 
-  // 监控
+  // 监控（接真实系统数据 /api/system/stats）
   function initMonitor(){
     const cpu = document.getElementById('monitorCpu');
     if(!cpu) return;
-    const timer = setInterval(()=>{
-      if(!document.body.contains(cpu)){ clearInterval(timer); return; }
-      const val = 25 + Math.floor(Math.random() * 30);
-      cpu.textContent = val + '%';
-    }, 1500);
+    const statusOf = (v, warn, crit) => v==null ? '--' : (v>=crit ? '偏高' : (v>=warn ? '较高' : '正常'));
+    async function refresh(){
+      if(!document.body.contains(cpu)){ if(window._monitorTimer){clearInterval(window._monitorTimer); window._monitorTimer=null;} return; }
+      try{
+        const s = await fetch('/api/system/stats').then(r=>r.json());
+        if(!document.body.contains(cpu)) return;
+        // CPU
+        cpu.textContent = s.cpu==null ? '--' : s.cpu + '%';
+        // 内存
+        const mem = document.getElementById('monitorMem');
+        const memSt = document.getElementById('monitorMemStatus');
+        if(mem && s.memPercent!=null){ mem.textContent = s.memPercent + '% (' + s.memUsedGb + '/' + s.memTotalGb + 'G)'; }
+        if(memSt) memSt.textContent = statusOf(s.memPercent, 80, 92);
+        // 磁盘
+        const disk = document.getElementById('monitorDisk');
+        const diskSt = document.getElementById('monitorDiskStatus');
+        if(disk && s.diskPercent!=null){ disk.textContent = s.diskPercent + '% (' + s.diskUsedGb + '/' + s.diskTotalGb + 'G)'; }
+        if(diskSt) diskSt.textContent = statusOf(s.diskPercent, 80, 92);
+        // 负载
+        const load = document.getElementById('monitorLoad');
+        const loadSt = document.getElementById('monitorLoadStatus');
+        if(load && s.load){ load.textContent = s.load.map(x=>x.toFixed(2)).join(' / '); }
+        if(loadSt) loadSt.textContent = s.load ? statusOf(s.load[0], 4, 8) : '--';
+        // 运行时间
+        const up = document.getElementById('monitorUptime');
+        if(up && s.uptime) up.textContent = s.uptime;
+      }catch(e){ /* 忽略网络错误，保持上次值 */ }
+    }
+    refresh();
+    if(window._monitorTimer) clearInterval(window._monitorTimer);
+    window._monitorTimer = setInterval(refresh, 3000);
+  }
+
+  // Emby 媒体库（接真实 /api/emby/stats）
+  async function initEmby(){
+    const movies = document.getElementById('embyMovies');
+    if(!movies) return;
+    try{
+      const s = await fetch('/api/emby/stats').then(r=>r.json());
+      if(!document.body.contains(movies)) return;
+      if(!s.ok){
+        movies.textContent = '未连接';
+        const ms=document.getElementById('embyMoviesStatus'); if(ms) ms.textContent='离线';
+        return;
+      }
+      movies.textContent = (s.movies||0) + ' 部';
+      const ms=document.getElementById('embyMoviesStatus'); if(ms) ms.textContent='正常';
+      const series=document.getElementById('embySeries'); if(series) series.textContent=(s.series||0)+' 部';
+      const ss=document.getElementById('embySeriesStatus'); if(ss) ss.textContent='正常';
+      const eps=document.getElementById('embyEpisodes'); if(eps) eps.textContent=(s.episodes||0)+' 集';
+      const act=document.getElementById('embyActive'); if(act) act.textContent=(s.activeUsers!=null?s.activeUsers:'--')+' 个';
+      const as=document.getElementById('embyActiveStatus'); if(as) as.textContent=(s.activeUsers>0?'活跃':'空闲');
+    }catch(e){
+      movies.textContent = '读取失败';
+    }
   }
 
   // ========== 人物卡片 ==========

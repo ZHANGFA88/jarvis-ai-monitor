@@ -30,13 +30,22 @@
 
 ![Hotspot Detail](docs/screenshots/hotspot-detail.png)
 
+### 真实系统监控
+CPU / 内存 / 磁盘 / 系统负载 / 运行时间，全部真实数据，定时刷新。
+
+![System Monitor](docs/screenshots/system-monitor.png)
+
 ## 🚀 核心功能
 
 ### JARVIS AI 助手
 - 🎨 **科幻全息 UI**：粒子球体动画、数据能量环、扫描线特效
 - 💬 **AI 对话**：接入 OpenAI 兼容 API，流式输出，支持动态卡片渲染
 - 🧠 **思考流可视化**：实时展示 AI 检索、思考、生成过程
-- 📊 **12 个功能面板**：系统监控、音乐播放、网络测速、媒体库、安全中心等
+- 📊 **真实系统监控**：CPU / 内存 / 磁盘 / 系统负载 / 运行时间（macOS 原生命令，零依赖）
+- 🧹 **磁盘清理扫描**：真实扫描缓存 / 日志 / 回收站 / 临时文件大小
+- 🎬 **Emby 媒体库**：真实电影 / 剧集 / 集数 / 在播会话统计（需配置 Emby）
+- 🌐 **网络测速**：真实 ping / 下载 / 上传测速
+- 🧬 **记忆图谱**：解析 Agent 记忆文件生成可交互的 3D 记忆节点网络
 
 ### 舆情监控大屏
 - 📡 **六平台实时热榜**：微博 / 抖音 / 知乎 / B站 / 今日头条 / GitHub Trending
@@ -150,6 +159,11 @@ jarvis-ai-monitor/
 | `GET /api/hotspot/all` | 获取全部平台热榜聚合数据 |
 | `GET /api/hotspot/{platform}` | 获取指定平台热榜（weibo/douyin/zhihu/bilibili/toutiao/github） |
 | `POST /api/chat` | AI 对话代理（流式，Token 后端注入） |
+| `GET /api/system/stats` | 真实系统监控（CPU/内存/磁盘/负载/运行时间） |
+| `GET /api/system/cleanup` | 磁盘可清理项扫描（只读不删） |
+| `GET /api/system/speedtest` | 网络测速（ping/下载/上传） |
+| `GET /api/agent/memory` | 解析 Agent 记忆文件为记忆节点 |
+| `GET /api/emby/stats` | Emby 媒体库统计（需配置） |
 
 ## 📝 数据源说明
 
