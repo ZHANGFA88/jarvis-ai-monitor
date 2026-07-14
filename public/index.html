@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HomeLab 监控大屏</title>
+  <style>
+    :root{
+      --bg:#020612;--panel:rgba(7,18,34,.74);--panel2:rgba(10,28,51,.62);
+      --line:rgba(112,193,255,.22);--line2:rgba(34,211,238,.42);
+      --text:#eaf6ff;--muted:#7f94b3;--cyan:#22d3ee;--blue:#3b82f6;
+      --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--purple:#a855f7;
+      --shadow:0 24px 70px rgba(0,0,0,.42);--glow:0 0 32px rgba(34,211,238,.20)
+    }
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%}
+    body{
+      margin:0;color:var(--text);overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Helvetica Neue",Arial,sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%,rgba(34,211,238,.22),transparent 28%),
+        radial-gradient(circle at 86% 12%,rgba(59,130,246,.22),transparent 30%),
+        radial-gradient(circle at 62% 95%,rgba(168,85,247,.18),transparent 38%),
+        linear-gradient(135deg,#02040b 0%,#071225 48%,#020612 100%);
+    }
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:linear-gradient(rgba(34,211,238,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.10) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at center,black 0%,transparent 78%)}
+    body:after{content:"";position:fixed;left:-20%;right:-20%;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 22px var(--cyan);opacity:.22;animation:scan 10s linear infinite;pointer-events:none}.earthWatermark{position:fixed;right:-110px;top:96px;width:620px;height:620px;border-radius:50%;z-index:0;pointer-events:none;opacity:.22;background:radial-gradient(circle at 36% 34%,rgba(80,170,255,.55),rgba(18,62,121,.38) 38%,rgba(2,8,23,.15) 68%,transparent 72%),url('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg') center/cover;filter:saturate(1.05) contrast(1.08);box-shadow:inset -70px -50px 100px rgba(0,0,0,.75),0 0 120px rgba(34,211,238,.18);animation:earthFloat 18s ease-in-out infinite}.earthWatermark:after{content:"";position:absolute;inset:-18px;border-radius:50%;border:1px solid rgba(34,211,238,.18);box-shadow:0 0 52px rgba(34,211,238,.18)}@keyframes earthFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(18px) rotate(2deg)}}body.pageLeaving{animation:pageFadeOut .34s ease forwards}body.pageEntering{animation:pageFadeIn .36s ease both}@keyframes pageFadeOut{to{opacity:0;filter:blur(8px);transform:scale(.985)}}@keyframes pageFadeIn{from{opacity:0;filter:blur(8px);transform:scale(1.015)}to{opacity:1;filter:none;transform:none}}
+    @keyframes scan{0%{transform:translateY(-10vh)}100%{transform:translateY(110vh)}}
+
+    .wrap{width:100vw;height:100vh;padding:22px;display:grid;grid-template-rows:76px 118px 1fr 252px;gap:18px;position:relative;z-index:1}
+    .card{position:relative;background:linear-gradient(180deg,var(--panel),rgba(4,12,25,.66));border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(18px);overflow:hidden}
+    .card:before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(34,211,238,.52),transparent 28%,rgba(168,85,247,.26) 68%,transparent);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.55}
+    .card:after{content:"";position:absolute;left:18px;right:18px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(120,220,255,.75),transparent);opacity:.55}
+
+    header{display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:linear-gradient(90deg,rgba(8,24,45,.90),rgba(8,18,34,.66))}
+    .title{font-size:32px;letter-spacing:1px;font-weight:820;text-shadow:0 0 26px rgba(34,211,238,.22)}
+    .title:before{content:"◆";color:var(--cyan);margin-right:14px;font-size:30px;vertical-align:4px;text-shadow:0 0 18px var(--cyan)}
+    .sub{color:var(--muted);font-size:16px;margin-left:20px}.status{font-size:16px;color:#ffe7b6;white-space:nowrap}.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:10px;box-shadow:0 0 18px currentColor}.yellow{background:var(--yellow);color:var(--yellow)}.green{background:var(--green);color:var(--green)}.red{background:var(--red);color:var(--red)}.cyan{background:var(--cyan);color:var(--cyan)}.purple{background:var(--purple);color:var(--purple)}
+    header a{color:var(--cyan)!important;text-decoration:none!important;border:1px solid rgba(34,211,238,.42)!important;border-radius:999px!important;padding:9px 15px!important;font-size:15px!important;background:rgba(34,211,238,.08);box-shadow:var(--glow)}
+
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}.kpi{padding:18px 24px;display:flex;flex-direction:column;justify-content:center}.kpi .name{color:var(--muted);font-size:15px;letter-spacing:.5px}.kpi .value{font-size:30px;line-height:1.12;font-weight:850;margin:8px 0;text-shadow:0 0 24px rgba(34,211,238,.16)}.kpi .desc{font-size:15px;color:#c5d4e8}.cyanText{color:var(--cyan)}.greenText{color:var(--green)}.yellowText{color:var(--yellow)}.redText{color:#ff6b6b}.purpleText{color:var(--purple)}
+    .kpi:nth-child(1){background:linear-gradient(135deg,rgba(34,211,238,.13),rgba(7,18,34,.72))}.kpi:nth-child(2){background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(7,18,34,.72))}.kpi:nth-child(3){background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(7,18,34,.72))}.kpi:nth-child(4){background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(7,18,34,.72))}
+
+    .main{display:grid;grid-template-columns:minmax(0,1.56fr) minmax(360px,.94fr);gap:18px;min-height:0}.panelTitle{font-size:22px;font-weight:820;margin:22px 26px 0;letter-spacing:.3px}.panelTitle:before{content:"";display:inline-block;width:7px;height:24px;border-radius:8px;background:linear-gradient(var(--cyan),var(--blue));box-shadow:0 0 16px var(--cyan);margin-right:12px;vertical-align:-4px}.panelSub{font-size:15px;color:var(--muted);margin:7px 26px}.chart{height:calc(100% - 72px);padding:4px 32px 24px;display:flex;align-items:end;gap:14px;background:linear-gradient(180deg,transparent 0%,rgba(34,211,238,.035) 100%)}.panelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-right:22px}.posterControls{display:flex;gap:6px;margin-top:22px;position:relative;z-index:2}.posterBtn{border:1px solid rgba(34,211,238,.25);background:rgba(15,23,42,.42);color:#cfe7ff;border-radius:999px;padding:5px 9px;font-size:12px;cursor:pointer}.posterBtn.active{background:rgba(34,211,238,.18);border-color:rgba(34,211,238,.62);color:#eaffff}.posterWall{height:calc(100% - 72px);padding:8px 24px 20px;display:grid;grid-template-columns:repeat(var(--poster-cols,10),minmax(0,1fr));gap:12px;align-items:stretch}.posterWall.small{gap:10px}.posterItem{position:relative;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 30px rgba(0,0,0,.28);min-height:0}.posterItem img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:2/3;pointer-events:none}.posterWall.small .posterItem img{aspect-ratio:2/2.85}.posterItem a{position:relative;z-index:1}.posterItem:after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.78));pointer-events:none}.posterInfo{position:absolute;left:8px;right:8px;bottom:7px;z-index:2;pointer-events:none}.posterTitle{font-size:12px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.posterCat{font-size:11px;color:#a8c7da;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.posterEmpty{grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:var(--muted)}.bar{flex:1;border-radius:14px 14px 5px 5px;background:linear-gradient(180deg,#65f4ff 0%,rgba(34,211,238,.74) 42%,rgba(34,211,238,.18) 100%);position:relative;min-height:18px;box-shadow:0 0 20px rgba(34,211,238,.18)}.bar:before{content:"";position:absolute;left:0;right:0;top:-7px;height:7px;border-radius:999px;background:rgba(169,246,255,.9);box-shadow:0 0 22px rgba(34,211,238,.75)}.bar:after{content:"";position:absolute;bottom:0;left:20%;right:20%;height:36%;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,rgba(168,85,247,.95),rgba(168,85,247,.38));box-shadow:0 0 16px rgba(168,85,247,.28)}.bar span{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap}.bar i{position:absolute;left:50%;top:-25px;transform:translateX(-50%);font-style:normal;font-size:11px;color:#bff7ff;white-space:nowrap;opacity:.9}
+
+    .topology{height:calc(100% - 72px);padding:24px 28px;display:flex;flex-direction:column;justify-content:flex-start;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.topology::-webkit-scrollbar{width:6px}.topology::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:999px}.topology::-webkit-scrollbar-thumb{background:rgba(34,211,238,.35);border-radius:999px}.topology::-webkit-scrollbar-thumb:hover{background:rgba(34,211,238,.55)}.nodes{display:flex;align-items:center;justify-content:space-between;margin-top:4px;position:relative}.nodes:before{content:"";position:absolute;left:18%;right:18%;top:36px;height:2px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.55),rgba(34,197,94,.55),transparent);box-shadow:0 0 18px rgba(34,211,238,.35)}.node{text-align:center;z-index:1;min-width:100px}.circle{width:74px;height:74px;border-radius:50%;border:2px solid var(--cyan);background:radial-gradient(circle,rgba(34,211,238,.22),rgba(34,211,238,.05));margin:auto;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 0 28px rgba(34,211,238,.24),inset 0 0 18px rgba(34,211,238,.10)}.node b{display:block;margin-top:11px;font-size:16px}.node span{font-size:13px;color:var(--muted)}.clients{display:grid;grid-template-columns:repeat(2,1fr);gap:9px 18px;margin-top:22px;padding-bottom:4px}.client{display:flex;justify-content:space-between;color:#d4e3f5;font-size:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.025);border-radius:12px;padding:9px 11px}
+
+    .bottom{display:grid;grid-template-columns:minmax(250px,.82fr) minmax(250px,.82fr) minmax(420px,1.36fr);gap:18px;min-height:0}.bottom .card{display:flex;flex-direction:column;min-height:0}.bottom .panelTitle{flex:0 0 auto}.bottom .list,.bottom .rec{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:18px}.bottom .list::-webkit-scrollbar,.bottom .rec::-webkit-scrollbar{width:6px}.bottom .list::-webkit-scrollbar-track,.bottom .rec::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:999px}.bottom .list::-webkit-scrollbar-thumb,.bottom .rec::-webkit-scrollbar-thumb{background:rgba(34,211,238,.35);border-radius:999px}.bottom .list::-webkit-scrollbar-thumb:hover,.bottom .rec::-webkit-scrollbar-thumb:hover{background:rgba(34,211,238,.55)}.list{padding:14px 26px 18px}.svc{display:flex;align-items:center;justify-content:space-between;font-size:16px;padding:6px 0}.svcLeft{display:flex;align-items:center}.rec{padding:12px 26px 18px}.recItem{display:grid;grid-template-columns:66px 1fr;gap:13px;align-items:center;margin:9px 0;padding:6px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.045)}.tag{height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}.tag.error{background:rgba(239,68,68,.18);color:#ff7b7b}.tag.warn{background:rgba(245,158,11,.18);color:#ffd18a}.tag.info{background:rgba(34,211,238,.16);color:#7ceeff}.tag.ok{background:rgba(34,197,94,.16);color:#82f6a8}.recText{font-size:16px;color:#dce8fb}.small{font-size:13px;color:var(--muted);line-height:1.45}.value{font-weight:820}.surgeStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.surgeStats div{border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);border-radius:12px;padding:9px;text-align:center}.surgeStats b{display:block;color:var(--cyan);font-size:20px}.surgeStats span{font-size:12px;color:var(--muted)}.svcCard{border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.028);border-radius:12px;padding:8px 10px;margin:7px 0;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease}.svcCard:hover{transform:translateY(-1px);border-color:rgba(34,211,238,.38);background:rgba(34,211,238,.055)}.svcCard:active{transform:translateY(0)}.svcTop{display:flex;align-items:center;justify-content:space-between;font-size:15px}.svcName{display:flex;align-items:center;gap:8px}.svcIcon{width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:rgba(34,211,238,.12);color:var(--cyan)}.svcStatus{border-radius:999px;padding:3px 8px;font-size:12px;border:1px solid rgba(255,255,255,.1)}.svcStatus.ok{color:#9ff7b8;background:rgba(34,197,94,.12)}.svcStatus.bad{color:#ff9b9b;background:rgba(239,68,68,.12)}.svcDetail{display:flex;justify-content:space-between;margin-top:5px}.healthBar{height:4px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:7px}.healthBar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));box-shadow:0 0 12px rgba(34,211,238,.25)}.healthBar.bad i{background:linear-gradient(90deg,var(--red),var(--yellow))}.recItem{grid-template-columns:60px 1fr auto}.recLevel{font-size:18px}.recText b{display:block;font-size:15px;margin-bottom:2px}.recText span{font-size:13px;color:var(--muted)}.topActions{display:flex;align-items:center;gap:10px}.topBtn{color:var(--cyan);text-decoration:none;border:1px solid rgba(34,211,238,.35);border-radius:10px;padding:9px 12px;background:rgba(15,23,42,.38);font-size:14px;cursor:pointer}.topBtn:hover{background:rgba(34,211,238,.12)}.topBtn.primary{background:rgba(34,211,238,.16);box-shadow:0 0 20px rgba(34,211,238,.16)}.freshness{font-size:12px;color:var(--muted);margin-top:5px}.freshness.ok{color:#9ff7b8}.freshness.warn{color:#ffd18a}.freshness.bad{color:#ff9b9b}.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(18px);z-index:90;max-width:min(620px,88vw);padding:12px 16px;border-radius:12px;background:rgba(15,23,42,.94);border:1px solid rgba(34,211,238,.35);box-shadow:0 18px 60px rgba(0,0,0,.42);color:#e8f7ff;font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.settingsOverlay{position:fixed;inset:0;z-index:60;background:rgba(0,5,16,.62);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}.settingsPanel{width:min(900px,92vw);max-height:86vh;overflow:auto;background:rgba(15,23,42,.94);border:1px solid rgba(0,212,255,.22);box-shadow:0 24px 80px rgba(0,0,0,.55);border-radius:14px;padding:20px}.settingsHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.settingsHead h2{margin:0}.settingsGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.settingsSection{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;background:rgba(255,255,255,.035)}.settingsSection h3{margin:0 0 10px;font-size:17px}.settingsRow{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed rgba(255,255,255,.08);padding:8px 0}.settingsRow:last-child{border-bottom:0}.settingsLabel{color:var(--muted);font-size:13px}.settingsValue{text-align:right;font-weight:700}.settingsInput{width:100%;background:rgba(2,8,20,.58);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#e8f7ff;padding:8px}.settingsActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.settingsAction{border:1px solid rgba(34,211,238,.28);background:rgba(34,211,238,.08);color:#c8f7ff;border-radius:10px;padding:8px 10px;cursor:pointer}.advancedPanel{display:none;margin-top:12px}.advancedGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.settingsNote{margin-top:10px;color:var(--muted);font-size:12px}
+
+    @media (max-width:1200px){.wrap{padding:16px;gap:14px;grid-template-rows:auto auto 1fr auto;overflow:auto}.kpis,.bottom{grid-template-columns:repeat(2,1fr)}.main{grid-template-columns:1fr}body{overflow:auto}.title{font-size:30px}}
+  </style>
+</head>
+<body class="pageEntering">
+<div class="earthWatermark"></div>
+<div class="wrap">
+  <header class="card"><div><span class="title">HomeLab 监控大屏</span><span class="sub" id="subtitle">loading...</span><div id="freshness" class="freshness">数据更新时间：读取中...</div></div><div class="topActions"><a class="topBtn primary pageLink" href="jarvis.html">🤖 贾维斯 AI</a><a class="topBtn pageLink" href="globe/index.html">🌐 网络地球</a><button class="topBtn" id="refreshBtn">🔄 刷新数据</button><button class="topBtn" id="settingsBtn">⚙️ 设置</button><div class="status" id="overall"><span class="dot yellow"></span>加载中</div></div></header>
+  <section class="kpis">
+    <div class="card kpi"><div class="name">最近访问流量</div><div class="value cyanText" id="traffic">-</div><div class="desc" id="trafficDesc">Surge 最近事件</div></div>
+    <div class="card kpi"><div class="name">当前采样速率</div><div class="value greenText" id="network">-</div><div class="desc" id="networkDesc">UniFi WAN + WLAN</div></div>
+    <div class="card kpi"><div class="name">服务在线</div><div class="value yellowText" id="svcCount">-</div><div class="desc" id="svcDesc">Docker / HTTP</div></div>
+    <div class="card kpi"><div class="name">磁盘剩余</div><div class="value redText" id="disk">-</div><div class="desc" id="diskDesc">系统盘</div></div>
+  </section>
+  <section class="main">
+    <div class="card posterCard"><div class="panelHead"><div><div class="panelTitle">Emby 最近入库</div><div class="panelSub" id="posterSub">最近添加的媒体海报</div></div><div class="posterControls"><button class="posterBtn active" data-filter="all">全部</button><button class="posterBtn" data-filter="Movie">电影</button><button class="posterBtn" data-filter="Series">剧集</button><button class="posterBtn active" data-count="10">10</button><button class="posterBtn" data-count="14">14</button><button class="posterBtn" data-count="18">18</button><button class="posterBtn" data-size="small">小</button><button class="posterBtn active" data-size="normal">中</button></div></div><div class="posterWall" id="posterWall"></div></div>
+    <div class="card"><div class="panelTitle">UBNT 网络拓扑</div><div class="panelSub" id="ubntSub">等待配置 UniFi 只读 API</div><div class="topology"><div class="nodes"><div class="node"><div class="circle">●</div><b>Gateway</b><span>WAN 待接入</span></div><div class="node"><div class="circle" style="border-color:var(--green);background:rgba(16,185,129,.12)">◆</div><b>Switch</b><span>端口待接入</span></div><div class="node"><div class="circle" style="border-color:var(--green);background:rgba(16,185,129,.12)">◉</div><b>AP</b><span>客户端待接入</span></div></div><div class="clients" id="clients"></div></div></div>
+  </section>
+  <section class="bottom">
+    <div class="card"><div class="panelTitle">服务健康</div><div class="list" id="services"></div></div>
+    <div class="card"><div class="panelTitle">Surge 访问数据</div><div class="list"><div class="value cyanText" style="font-size:26px" id="surgeTraffic">-</div><p class="small" id="surgeSub">等待访问事件</p><div class="surgeStats"><div><b id="surgeProxy">-</b><span>代理/CDN</span></div><div><b id="surgeDirect">-</b><span>直连</span></div><div><b id="surgeForeign">-</b><span>国外</span></div></div><div class="small" id="surgeLatest">-</div></div></div>
+    <div class="card"><div class="panelTitle">每日建议 & 推荐</div><div class="rec" id="recs"></div></div>
+  </section>
+</div>
+<div class="settingsOverlay" id="settingsOverlay">
+  <div class="settingsPanel">
+    <div class="settingsHead"><h2>⚙️ 主面板设置</h2><button class="settingsAction" id="settingsClose">关闭</button></div>
+    <div class="settingsGrid">
+      <div class="settingsSection"><h3>数据源</h3>
+        <div class="settingsRow"><span class="settingsLabel">后端状态</span><span class="settingsValue" id="sStatus">-</span></div>
+        <div class="settingsRow"><span class="settingsLabel">Surge 事件</span><span class="settingsValue" id="sSurgeEvents">-</span></div><div class="settingsRow"><span class="settingsLabel">Emby 海报</span><span class="settingsValue" id="sPosters">-</span></div>
+        <div class="settingsRow"><span class="settingsLabel">UniFi</span><span class="settingsValue" id="sUniFi">-</span></div>
+        <div class="settingsRow"><span class="settingsLabel">刷新频率</span><span class="settingsValue">30秒</span></div>
+        <div class="settingsActions"><button class="settingsAction" id="sRefreshNow">立即刷新</button><a class="settingsAction" href="globe/index.html" style="text-decoration:none">打开网络地球</a></div>
+      </div>
+      <div class="settingsSection"><h3>系统概览</h3>
+        <div class="settingsRow"><span class="settingsLabel">在线服务</span><span class="settingsValue" id="sServices">-</span></div>
+        <div class="settingsRow"><span class="settingsLabel">磁盘剩余</span><span class="settingsValue" id="sDisk">-</span></div>
+        <div class="settingsRow"><span class="settingsLabel">Docker API</span><span class="settingsValue" id="sDocker">-</span></div>
+        <div class="settingsRow"><span class="settingsLabel">最近更新</span><span class="settingsValue" id="sUpdated">-</span></div>
+      </div>
+    </div>
+    <div class="settingsSection" style="margin-top:12px"><h3>高级设置</h3>
+      <div id="advancedLogin"><div class="settingsRow"><span class="settingsLabel">进入高级设置</span><input class="settingsInput" id="advancedPassword" type="password" placeholder="输入管理密码" style="max-width:260px"></div><div class="settingsActions"><button class="settingsAction" id="advancedLoginBtn">解锁高级设置</button></div></div>
+      <div class="advancedPanel" id="advancedPanel">
+        <div class="advancedGrid">
+          <div class="field"><label>后端采集间隔 refreshSeconds</label><input class="settingsInput" id="advRefreshSeconds" type="number" min="5"></div>
+          <div class="field"><label>HTTP 超时 httpTimeoutSec</label><input class="settingsInput" id="advHttpTimeout" type="number" min="1"></div>
+          <div class="field"><label>Surge 启用</label><select class="settingsInput" id="advSurgeEnabled"><option value="true">启用</option><option value="false">禁用</option></select></div>
+          <div class="field"><label>Surge Base URL</label><input class="settingsInput" id="advSurgeBase"></div>
+          <div class="field"><label>Surge 最大事件数</label><input class="settingsInput" id="advSurgeMaxEvents" type="number" min="10"></div>
+          <div class="field"><label>UniFi 启用</label><select class="settingsInput" id="advUbntEnabled"><option value="true">启用</option><option value="false">禁用</option></select></div>
+          <div class="field"><label>UniFi Base URL</label><input class="settingsInput" id="advUbntBase"></div>
+          <div class="field"><label>UniFi Site</label><input class="settingsInput" id="advUbntSite"></div>
+          <div class="field"><label>磁盘警告 GB</label><input class="settingsInput" id="advDiskWarn" type="number" min="1"></div>
+          <div class="field"><label>磁盘严重 GB</label><input class="settingsInput" id="advDiskCritical" type="number" min="1"></div>
+        </div>
+        <div class="settingsActions"><button class="settingsAction" id="advancedSaveBtn">保存高级设置</button><button class="settingsAction" id="advancedReloadBtn">重新读取配置</button></div>
+        <div class="settingsNote" id="advancedMsg">只允许修改安全白名单字段；密码和 Token 不在前端显示。</div>
+      </div>
+    </div>
+    <div class="settingsNote">主面板设置复用本地后端 API，不展示敏感密码/Token。</div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const statusUrl='/data/status.json';
+const networkUrl='/data/network_events.json';
+const embyRecentUrl='/api/emby/recent';
+let lastStatus=null,lastNetwork=null,lastPosters=[],posterCount=10,posterSize='normal',posterFilter='all',adminToken=null;
+function smoothGo(url){document.body.classList.remove('pageEntering');document.body.classList.add('pageLeaving');setTimeout(()=>{location.href=url},280)}
+function cls(level){return level==='error'?'error':level==='warn'?'warn':level==='ok'?'ok':'info'}
+function dot(ok){return `<span class="dot ${ok?'green':'red'}"></span>`}
+function fmtBytes(n){n=Number(n)||0;if(n>=1024**3)return(n/1024**3).toFixed(2)+' GB';if(n>=1024**2)return(n/1024**2).toFixed(1)+' MB';if(n>=1024)return(n/1024).toFixed(0)+' KB';return n+' B'}
+function fmtRate(bytesPerSec){const mbps=(Number(bytesPerSec)||0)*8/1000000;if(mbps>=1)return mbps.toFixed(2)+' Mbps';return((Number(bytesPerSec)||0)*8/1000).toFixed(0)+' Kbps'}
+function fmtTime(ts){try{return new Date(ts*1000).toLocaleTimeString('zh-CN',{hour12:false})}catch{return '-'}}
+function isForeign(e){return (e.country||'').toLowerCase()!=='china'}
+function publicUrl(url){
+  if(!url)return'';
+  try{
+    const u=new URL(url, location.href);
+    if(['127.0.0.1','localhost','::1'].includes(u.hostname)) u.hostname=location.hostname||u.hostname;
+    return u.toString();
+  }catch{return url}
+}
+function showToast(msg){
+  const t=document.getElementById('toast'); if(!t)return alert(msg);
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function serviceClickMessage(name, v, ok, isOpenClaw){
+  if(isOpenClaw)return 'OpenClaw 控制台当前仅允许本机访问，为了安全不从大屏跳转。';
+  if(!v.url)return `${name} 未配置访问入口。`;
+  if(!ok){
+    const err=v.http?.error||v.container?.error||v.container?.status||'服务健康检查异常';
+    return `${name} 当前异常：${err}`;
+  }
+  return '';
+}
+function serviceIcon(name){name=(name||'').toLowerCase();if(name.includes('movie'))return'🎬';if(name.includes('emby'))return'📺';if(name.includes('qbit'))return'⬇️';if(name.includes('byte'))return'🧠';if(name.includes('openclaw'))return'🤖';return'🧩'}
+function recIcon(level){return level==='error'?'🚨':level==='warn'?'⚠️':level==='ok'?'✅':'💡'}
+
+function renderPosters(items){
+  lastPosters=items||[];
+  const wall=document.getElementById('posterWall');
+  wall.classList.toggle('small', posterSize==='small');
+  wall.style.setProperty('--poster-cols', posterCount);
+  wall.innerHTML='';
+  const filtered=posterFilter==='all'?lastPosters:lastPosters.filter(x=>String(x.category||'').toLowerCase()===posterFilter.toLowerCase());
+  const shown=filtered.slice(0,posterCount);
+  const filterName=posterFilter==='all'?'全部':(posterFilter==='Movie'?'电影':'剧集');
+  document.getElementById('posterSub').textContent=`最近入库 ${shown.length}/${filtered.length} 部 · ${filterName} · 成人内容已隐藏`;
+  if(!shown.length){wall.innerHTML='<div class="posterEmpty">暂无 Emby 海报数据</div>';return}
+  for(const item of shown){
+    const div=document.createElement('div'); div.className='posterItem'; div.title=`${item.title} · ${item.category||''}`;
+    if(item.href){div.style.cursor='pointer'; div.onclick=()=>window.open(item.href,'_blank','noopener');}
+    const inner=`<img loading="lazy" src="${item.poster}" alt="${item.title}" onerror="this.style.opacity=.18"><div class="posterInfo"><div class="posterTitle">${item.title}</div><div class="posterCat">${item.category||'媒体库'}</div></div>`;
+    if(item.href){div.innerHTML=`<a href="${item.href}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;color:inherit;text-decoration:none">${inner}</a>`;}
+    else{div.innerHTML=inner;}
+    wall.appendChild(div);
+  }
+}
+async function loadPosters(){
+  try{const res=await fetch(embyRecentUrl+'?limit=24&t='+Date.now()).then(r=>r.json());renderPosters(res.items||[])}catch(e){renderPosters([])}
+}
+function renderSurge(net){
+  lastNetwork=net; const events=net?.events||[];
+  const totalBytes=events.reduce((a,e)=>a+(Number(e.in_bytes)||0)+(Number(e.out_bytes)||0),0);
+  const proxy=events.filter(e=>/Proxy|CDN|专线/i.test(e.route||'')).length;
+  const direct=events.filter(e=>/DIRECT/i.test(e.route||'')).length;
+  const foreign=events.filter(isForeign).length;
+  document.getElementById('traffic').textContent=fmtBytes(totalBytes);
+  document.getElementById('trafficDesc').textContent=`最近 ${events.length} 条访问事件`;
+  document.getElementById('surgeTraffic').textContent=`${events.length} 条 · ${fmtBytes(totalBytes)}`;
+  document.getElementById('surgeSub').textContent=net?.updatedAt?`最后采集：${net.updatedAt}`:'等待 Surge 数据';
+  document.getElementById('surgeProxy').textContent=proxy;document.getElementById('surgeDirect').textContent=direct;document.getElementById('surgeForeign').textContent=foreign;
+  const latest=events.slice(0,3).map(e=>`${e.domain} / ${e.country||'-'} / ${e.latency_ms??'-'}ms`).join('<br>') || '-';
+  document.getElementById('surgeLatest').innerHTML='最近访问：<br>'+latest;
+}
+function parseTs(ts){
+  if(!ts)return null;
+  const d=new Date(ts); return isNaN(d.getTime())?null:d;
+}
+function updateFreshness(s){
+  const el=document.getElementById('freshness'); if(!el)return;
+  const d=parseTs(s?.ts); const now=Date.now();
+  if(!d){el.textContent='数据更新时间：未知'; el.className='freshness bad'; return;}
+  const age=Math.max(0,Math.round((now-d.getTime())/1000));
+  const text=d.toLocaleTimeString('zh-CN',{hour12:false});
+  const collectors=[];
+  if(s?.surge?.enabled) collectors.push('Surge');
+  if(s?.ubnt?.enabled) collectors.push('UniFi');
+  const suffix=collectors.length?` · ${collectors.join('/')} 已接入`:'';
+  el.textContent=`数据更新时间：${text} · ${age}s 前${suffix}`;
+  el.className='freshness '+(age>300?'bad':age>120?'warn':'ok');
+}
+function renderStatus(s){
+  lastStatus=s; updateFreshness(s);
+  document.getElementById('subtitle').textContent='最后更新：'+(s.ts||'-');
+  const problems=(s.kpi?.critical||0)+(s.kpi?.warnings||0);
+  document.getElementById('overall').innerHTML=`<span class="dot ${problems?'yellow':'green'}"></span>${problems?problems+' 项需处理':'全部正常'}`;
+  document.getElementById('svcCount').textContent=`${s.kpi?.onlineServices??'-'} / ${s.kpi?.totalServices??'-'}`;
+  document.getElementById('svcDesc').textContent=s.docker?.apiOk?'Docker API OK':'Docker API 异常';
+  document.getElementById('disk').textContent=(s.disk?.freeGb??'-')+' GB';
+  document.getElementById('diskDesc').textContent=`已用 ${s.disk?.usedPct??'-'}%`;
+  document.getElementById('ubntSub').textContent=s.ubnt?.note||s.ubnt?.status||'';
+  if(s.ubnt?.ok){
+    const wan=s.ubnt.wan||{}, wlan=s.ubnt.wlan||{}, counts=s.ubnt.counts||{};
+    const nodeEls=document.querySelectorAll('.nodes .node');
+    if(nodeEls[0]) nodeEls[0].innerHTML=`<div class="circle">●</div><b>${wan.gatewayName||'Gateway'}</b><span>${wan.ip||'-'} · CPU ${wan.cpu||'-'}%</span>`;
+    if(nodeEls[1]) nodeEls[1].innerHTML=`<div class="circle" style="border-color:var(--purple);background:rgba(168,85,247,.12)">◆</div><b>Devices</b><span>${counts.devices||0} 台 · AP ${counts.aps||0}</span>`;
+    if(nodeEls[2]) nodeEls[2].innerHTML=`<div class="circle" style="border-color:var(--green);background:rgba(16,185,129,.12)">◉</div><b>Clients</b><span>${counts.clients||wlan.clients||0} 在线 · WLAN ${wlan.status||'-'}</span>`;
+    const rx=(Number(wan.rxRate)||0)+(Number(wlan.rxRate)||0), tx=(Number(wan.txRate)||0)+(Number(wlan.txRate)||0);
+    document.getElementById('network').textContent=`↓${fmtRate(rx)} ↑${fmtRate(tx)}`;
+    document.getElementById('networkDesc').textContent=`WAN ${wan.status||'-'} · ${counts.clients||wlan.clients||0} clients`;
+    const clients=document.getElementById('clients'); clients.innerHTML='';
+    const sorted=[...(s.ubnt.clients||[])].sort((a,b)=>((Number(b.rxRate)||0)+(Number(b.txRate)||0))-((Number(a.rxRate)||0)+(Number(a.txRate)||0)));
+    for(const c of sorted.slice(0,8)) clients.innerHTML+=`<div class="client"><span>${c.name||c.ip||c.mac}</span><span>${c.ip||''} · ${c.signal??'-'}dBm</span></div>`;
+  } else {
+    document.getElementById('network').textContent='UniFi 未连接';
+    const clients=document.getElementById('clients'); clients.innerHTML='';
+    ['Mac mini','Apple TV','iPhone','NAS'].forEach(n=>clients.innerHTML+=`<div class="client"><span>${n}</span><span>待接入</span></div>`);
+  }
+  const svc=document.getElementById('services'); svc.innerHTML='';
+  for(const [k,v] of Object.entries(s.services||{})){
+    const ok=!!(v.http?.ok || v.container?.running); const ms=Number(v.http?.ms)||0; const detail=v.http?`HTTP ${v.http.status??'ERR'} · ${v.http.ms}ms`:(v.container?.status||'');
+    const width=ok?Math.max(18,Math.min(100,100-ms)):18;
+    const isOpenClaw=(k||'').toLowerCase()==='openclaw'||String(v.name||'').toLowerCase().includes('openclaw');
+    const url=isOpenClaw?'':publicUrl(v.url||'');
+    const hint=isOpenClaw?'仅本机访问':(url?'点击打开':'未配置入口');
+    const card=document.createElement('div');
+    card.className='svcCard'; card.title=isOpenClaw?'OpenClaw 控制台当前仅允许本机访问':(url?`${v.name} · ${url}`:`${v.name} · 未配置入口`);
+    card.onclick=()=>{const msg=serviceClickMessage(v.name||k,v,ok,isOpenClaw); if(msg) showToast(msg); else if(url) window.open(url,'_blank','noopener');};
+    card.innerHTML=`<div class="svcTop"><div class="svcName"><span class="svcIcon">${serviceIcon(v.name)}</span><b>${v.name}</b></div><span class="svcStatus ${ok?'ok':'bad'}">${ok?'在线':'异常'}</span></div><div class="svcDetail small"><span>${detail}</span><span>${hint}</span></div><div class="healthBar ${ok?'':'bad'}"><i style="width:${width}%"></i></div>`;
+    svc.appendChild(card);
+  }
+  const rec=document.getElementById('recs'); rec.innerHTML='';
+  for(const x of (s.recommendations||[]).slice(0,4)){
+    const title=x.tag||'建议'; const detail=x.text||'';
+    rec.innerHTML+=`<div class="recItem"><div class="tag ${cls(x.level)}">${title}</div><div class="recText"><b>${recIcon(x.level)} ${title}</b><span>${detail}</span></div><div class="recLevel">${recIcon(x.level)}</div></div>`;
+  }
+}
+async function load(){
+  try{const [s,net]=await Promise.all([fetch(statusUrl+'?t='+Date.now()).then(r=>r.json()),fetch(networkUrl+'?t='+Date.now()).then(r=>r.json()).catch(()=>({events:[]}))]);renderStatus(s);renderSurge(net);loadPosters();updateSettingsPanel()}catch(e){document.getElementById('overall').innerHTML='<span class="dot red"></span>数据加载失败'}
+}
+function updateSettingsPanel(){
+  if(!document.getElementById('settingsOverlay')) return;
+  document.getElementById('sStatus').textContent=lastStatus?'正常':'-';
+  document.getElementById('sSurgeEvents').textContent=(lastNetwork?.events?.length??'-')+' 条';
+  document.getElementById('sUniFi').textContent=lastStatus?.ubnt?.ok?'已连接':(lastStatus?.ubnt?.enabled?'异常':'未启用');
+  document.getElementById('sPosters').textContent=(lastPosters?.length??0)+' 张';
+  document.getElementById('sServices').textContent=`${lastStatus?.kpi?.onlineServices??'-'} / ${lastStatus?.kpi?.totalServices??'-'}`;
+  document.getElementById('sDisk').textContent=(lastStatus?.disk?.freeGb??'-')+' GB';
+  document.getElementById('sDocker').textContent=lastStatus?.docker?.apiOk?'正常':'异常';
+  document.getElementById('sUpdated').textContent=lastStatus?.ts||'-';
+}
+function openSettings(){document.getElementById('settingsOverlay').style.display='flex';updateSettingsPanel()}
+function closeSettings(){document.getElementById('settingsOverlay').style.display='none'}
+function fillAdvancedForm(cfg){if(!cfg)return;document.getElementById('advRefreshSeconds').value=cfg.refreshSeconds??'';document.getElementById('advHttpTimeout').value=cfg.thresholds?.httpTimeoutSec??'';document.getElementById('advSurgeEnabled').value=String(!!cfg.surge?.enabled);document.getElementById('advSurgeBase').value=cfg.surge?.baseUrl??'';document.getElementById('advSurgeMaxEvents').value=cfg.surge?.maxEvents??'';document.getElementById('advUbntEnabled').value=String(!!cfg.ubnt?.enabled);document.getElementById('advUbntBase').value=cfg.ubnt?.baseUrl??'';document.getElementById('advUbntSite').value=cfg.ubnt?.site??'';document.getElementById('advDiskWarn').value=cfg.thresholds?.diskFreeGbWarn??'';document.getElementById('advDiskCritical').value=cfg.thresholds?.diskFreeGbCritical??''}
+async function adminLogin(){const password=document.getElementById('advancedPassword').value;const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})}).then(r=>r.json());if(!res.ok){alert('密码错误');return}adminToken=res.token;document.getElementById('advancedPanel').style.display='block';document.getElementById('advancedLogin').style.display='none';await loadAdminConfig();document.getElementById('advancedMsg').textContent='高级设置已解锁。'}
+async function loadAdminConfig(){const res=await fetch('/api/admin/config',{headers:{'X-Dashboard-Token':adminToken}}).then(r=>r.json());if(!res.ok)throw new Error(res.error||'读取配置失败');fillAdvancedForm(res.config);return res.config}
+function advancedPatchFromForm(){return{refreshSeconds:Number(document.getElementById('advRefreshSeconds').value),surge:{enabled:document.getElementById('advSurgeEnabled').value==='true',baseUrl:document.getElementById('advSurgeBase').value,maxEvents:Number(document.getElementById('advSurgeMaxEvents').value)},ubnt:{enabled:document.getElementById('advUbntEnabled').value==='true',baseUrl:document.getElementById('advUbntBase').value,site:document.getElementById('advUbntSite').value},thresholds:{diskFreeGbWarn:Number(document.getElementById('advDiskWarn').value),diskFreeGbCritical:Number(document.getElementById('advDiskCritical').value),httpTimeoutSec:Number(document.getElementById('advHttpTimeout').value)}}}
+async function saveAdminConfig(){const msg=document.getElementById('advancedMsg');const res=await fetch('/api/admin/config',{method:'POST',headers:{'Content-Type':'application/json','X-Dashboard-Token':adminToken},body:JSON.stringify({config:advancedPatchFromForm()})}).then(r=>r.json());if(!res.ok){msg.textContent='保存失败：'+(res.error||'unknown');return}fillAdvancedForm(res.config);msg.textContent='已保存。部分采集参数等待下一轮采集或重启脚本后生效。';await load()}
+document.getElementById('refreshBtn').onclick=()=>load();
+document.getElementById('settingsBtn').onclick=openSettings;
+document.getElementById('settingsClose').onclick=closeSettings;
+document.getElementById('settingsOverlay').onclick=e=>{if(e.target.id==='settingsOverlay')closeSettings()};
+document.getElementById('sRefreshNow').onclick=()=>load();
+document.getElementById('advancedLoginBtn').onclick=()=>adminLogin().catch(e=>alert('高级设置解锁失败：'+e.message));
+document.getElementById('advancedSaveBtn').onclick=()=>saveAdminConfig().catch(e=>{document.getElementById('advancedMsg').textContent='保存失败：'+e.message});
+document.getElementById('advancedReloadBtn').onclick=()=>loadAdminConfig().catch(e=>{document.getElementById('advancedMsg').textContent='读取失败：'+e.message});
+document.querySelectorAll('.pageLink').forEach(a=>a.onclick=e=>{e.preventDefault();smoothGo(a.href)});
+document.querySelectorAll('.posterBtn').forEach(btn=>btn.onclick=()=>{if(btn.dataset.filter){posterFilter=btn.dataset.filter;document.querySelectorAll('.posterBtn[data-filter]').forEach(b=>b.classList.toggle('active',b===btn));}if(btn.dataset.count){posterCount=Number(btn.dataset.count);document.querySelectorAll('.posterBtn[data-count]').forEach(b=>b.classList.toggle('active',b===btn));}if(btn.dataset.size){posterSize=btn.dataset.size;document.querySelectorAll('.posterBtn[data-size]').forEach(b=>b.classList.toggle('active',b===btn));}renderPosters(lastPosters)});
+load(); setInterval(load,30000);
+</script>
+</body>
+</html>
